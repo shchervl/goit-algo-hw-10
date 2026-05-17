@@ -12,14 +12,18 @@ import numpy as np
 from scipy.stats import qmc
 
 
-def crude_mc(
+def mean_value_mc(
     f: Callable[[np.ndarray], np.ndarray],
     a: float,
     b: float,
     n: int,
     rng: np.random.Generator | None = None,
 ) -> tuple[float, float]:
-    """Базовий sample-mean MC: I ≈ (b-a) · mean(f(X)), X ~ U[a, b]."""
+    """Базовий sample-mean MC: I ≈ (b-a) · mean(f(X)), X ~ U[a, b].
+
+    Синоніми в літературі: mean-value method, sample-mean method, crude MC.
+    Слугує еталоном (baseline) для оцінки variance reduction factor (VRF).
+    """
     rng = rng or np.random.default_rng()
     xs = rng.uniform(a, b, size=n)
     fs = f(xs)

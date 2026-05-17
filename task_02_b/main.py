@@ -6,8 +6,8 @@
   C) sin(x) на [0, 4]          — quasi-MC + stratified (плюс перевірка знаку)
 
 Для кожної функції виводиться таблиця з: оцінка, |err|, std err,
-VRF (variance reduction factor) = (σ_crude / σ_method)² — у скільки разів
-дисперсія методу менша за дисперсію crude MC.
+VRF (variance reduction factor) = (σ_mv / σ_method)² — у скільки разів
+дисперсія методу менша за дисперсію mean-value MC (baseline).
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from functions import ALL_CASES, TestCase
 from monte_carlo_advanced import (
     antithetic_mc,
     control_variate_mc,
-    crude_mc,
     importance_sampling_mc,
+    mean_value_mc,
     quasi_mc,
     stratified_mc,
 )
@@ -44,15 +44,15 @@ def run_case(case: TestCase) -> None:
 
     # baseline
     rng = np.random.default_rng(SEED)
-    crude_est, crude_se = crude_mc(case.f, case.a, case.b, N, rng=rng)
-    print(f"{'1. Crude MC':<22} {crude_est:>12.6f} "
-          f"{abs(crude_est - case.analytical):>10.6f} {crude_se:>10.6f} {'1.0x':>9}")
+    mv_est, mv_se = mean_value_mc(case.f, case.a, case.b, N, rng=rng)
+    print(f"{'1. Mean-value':<22} {mv_est:>12.6f} "
+          f"{abs(mv_est - case.analytical):>10.6f} {mv_se:>10.6f} {'1.0x':>9}")
 
     def row(name: str, est: float | None, se: float | None) -> None:
         if est is None:
             print(f"{name:<22} {'—':>12} {'—':>10} {'—':>10} {'—':>9}  (не застосовується)")
             return
-        vrf = (crude_se / se) ** 2 if se and se > 0 else float("inf")
+        vrf = (mv_se / se) ** 2 if se and se > 0 else float("inf")
         print(f"{name:<22} {est:>12.6f} "
               f"{abs(est - case.analytical):>10.6f} {se:>10.6f} {vrf:>8.1f}x")
 
@@ -83,16 +83,11 @@ def run_case(case: TestCase) -> None:
 
 def main() -> None:
     print(f"# Параметри: N = {N:,} (= 2^14),  seed = {SEED}")
-    print("VRF (variance reduction factor) — у скільки разів дисперсія методу менша за crude MC. \n"
-          "VRF = 10 означає, що метод при N точок дає таку саму точність, як crude MC при 10N точок.")
+    print("VRF (variance reduction factor) — у скільки разів дисперсія методу менша за mean-value MC. \n"
+          "VRF = 10 означає, що метод при N точок дає таку саму точність, як mean-value MC при 10N точок.")
     print()
     for case in ALL_CASES:
         run_case(case)
-    # print(
-    #     "VRF (variance reduction factor) — у скільки разів дисперсія методу\n"
-    #     "менша за crude MC. VRF = 10 означає, що метод при N точок дає таку\n"
-    #     "саму точність, як crude MC при 10·N точок."
-    # )
 
 
 if __name__ == "__main__":
